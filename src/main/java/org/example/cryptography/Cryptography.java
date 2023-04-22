@@ -42,64 +42,65 @@ public class Cryptography {
 
     public byte @NonNull[] encrypt(byte @NonNull[] data) {
         if (Objects.requireNonNull(mode) == Mode.ECB) {
-            return ecbEncrypt(data);
+            return ecbEncrypt(normalizeData(data));
         }
         return new byte[0];
     }
     public byte @NonNull[] decrypt(byte @NonNull[] data) {
         if (Objects.requireNonNull(mode) == Mode.ECB) {
-            return ecbDecrypt(data);
+            return ecbDecrypt(normalizeData(data));
         }
         return new byte[0];
     }
 
     public byte @NonNull[] encrypt(byte @NonNull[] data, byte[] initialVector) {
         initialVector = Arrays.copyOf(initialVector, initialVector.length);
+        ByteBuffer normalizedData = normalizeData(data);
         switch (mode){
-            case CBC -> { return cbcEncrypt(data, initialVector); }
-            case CFB -> { return cfbEncrypt(data, initialVector); }
-            case OFB -> { return ofbCrypt(data, initialVector); }
-            case CTR -> { return ctrCrypt(data, initialVector); }
-            case RD  -> { return rdCrypt(data, initialVector); }
+            case CBC -> { return cbcEncrypt(normalizedData, initialVector); }
+            case CFB -> { return cfbEncrypt(normalizedData, initialVector); }
+            case OFB -> { return ofbCrypt(normalizedData, initialVector); }
+            case CTR -> { return ctrCrypt(normalizedData, initialVector); }
+            case RD  -> { return rdCrypt(normalizedData, initialVector); }
             default -> { return new byte[0]; }
         }
     }
     public byte @NonNull[] decrypt(byte @NonNull[] data, byte[] initialVector) {
         initialVector = Arrays.copyOf(initialVector, initialVector.length);
+        ByteBuffer convertedData = ByteBuffer.wrap(data);
         switch (mode){
-            case CBC -> { return cbcDecrypt(data, initialVector); }
-            case CFB -> { return cfbDecrypt(data, initialVector); }
-            case OFB -> { return ofbCrypt(data, initialVector); }
-            case CTR -> { return ctrCrypt(data, initialVector); }
-            case RD  -> { return rdCrypt(data, initialVector); }
+            case CBC -> { return cbcDecrypt(convertedData, initialVector); }
+            case CFB -> { return cfbDecrypt(convertedData, initialVector); }
+            case OFB -> { return ofbCrypt(convertedData, initialVector); }
+            case CTR -> { return ctrCrypt(convertedData, initialVector); }
+            case RD  -> { return rdCrypt(convertedData, initialVector); }
             default -> { return new byte[0]; }
         }
     }
 
-    private byte[] ecbEncrypt(byte[] data) {
+    private byte @NonNull[] ecbEncrypt(@NonNull ByteBuffer data) {
         try {
-            return algorithm.encrypt(normalizeData(data,BLOCKLEN));
+            return algorithm.encrypt(data);
         } catch (Exception e) {
             return new byte[0];
         }
     }
-    private byte[] ecbDecrypt(byte[] data) {
+    private byte @NonNull[] ecbDecrypt(@NonNull ByteBuffer data) {
         try {
-            return algorithm.decrypt(normalizeData(data,BLOCKLEN));
+            return algorithm.decrypt(data);
         } catch (Exception e) {
             return new byte[0];
         }
     }
 
-    private byte @NonNull[] cbcEncrypt(byte @NonNull[] data,byte @NonNull[] initialVector) {
+    private byte @NonNull[] cbcEncrypt(@NonNull ByteBuffer data, byte @NonNull[] initialVector) {
         // TODO: initVector must by len == BLOCKLEN.
         try {
-            ByteBuffer buffer = normalizeData(data, BLOCKLEN);
-            ByteBuffer resBuffer = ByteBuffer.allocate(buffer.limit());
+            ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
             byte[] chunk = new byte[BLOCKLEN];
 
-            while (buffer.position() != buffer.limit()) {
-                buffer.get(chunk, 0, BLOCKLEN);
+            while (data.position() != data.limit()) {
+                data.get(chunk, 0, BLOCKLEN);
                 chunk = algorithm.encrypt(xor(chunk, initialVector));
                 resBuffer.put(chunk);
                 initialVector = Arrays.copyOf(chunk,chunk.length);
@@ -111,16 +112,15 @@ public class Cryptography {
         }
 
     }
-    private byte @NonNull [] cbcDecrypt(byte @NonNull[] data, byte @NonNull[] initialVector) {
+    private byte @NonNull [] cbcDecrypt(@NonNull ByteBuffer data, byte @NonNull[] initialVector) {
         // TODO: initVector must by len == BLOCKLEN.
           try {
-            ByteBuffer buffer = normalizeData(data, BLOCKLEN);
             // TODO: Выкинуть ошибку, такого быть не должно
-            ByteBuffer resBuffer = ByteBuffer.allocate(buffer.limit());
+            ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
             byte[] chunk = new byte[BLOCKLEN];
 
-            while (buffer.position() != buffer.limit()) {
-                buffer.get(chunk, 0, BLOCKLEN);
+            while (data.position() != data.limit()) {
+                data.get(chunk, 0, BLOCKLEN);
                 resBuffer.put(xor(algorithm.decrypt(chunk), initialVector));
                 initialVector = Arrays.copyOf(chunk,chunk.length);
             }
@@ -134,15 +134,14 @@ public class Cryptography {
 
     }
 
-    private byte @NonNull[] cfbEncrypt(byte @NonNull[] data,byte @NonNull[] initialVector) {
+    private byte @NonNull[] cfbEncrypt(@NonNull ByteBuffer data, byte @NonNull[] initialVector) {
         // TODO: initVector must by len == BLOCKLEN.
         try {
-            ByteBuffer buffer = normalizeData(data, BLOCKLEN);
-            ByteBuffer resBuffer = ByteBuffer.allocate(buffer.limit());
+            ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
             byte[] chunk = new byte[BLOCKLEN];
 
-            while (buffer.position() != buffer.limit()) {
-                buffer.get(chunk, 0, BLOCKLEN);
+            while (data.position() != data.limit()) {
+                data.get(chunk, 0, BLOCKLEN);
                 initialVector = xor(algorithm.encrypt(initialVector), chunk);
                 resBuffer.put(initialVector);
             }
@@ -151,15 +150,14 @@ public class Cryptography {
             return new byte[0];
         }
     }
-    private byte @NonNull[] cfbDecrypt(byte @NonNull[] data, byte @NonNull[] initialVector) {
+    private byte @NonNull[] cfbDecrypt(@NonNull ByteBuffer data, byte @NonNull[] initialVector) {
         // TODO: initVector must by len == BLOCKLEN.
         try {
-            ByteBuffer buffer = normalizeData(data, BLOCKLEN);
-            ByteBuffer resBuffer = ByteBuffer.allocate(buffer.limit());
+            ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
             byte[] chunk = new byte[BLOCKLEN];
 
-            while (buffer.position() != buffer.limit()) {
-                buffer.get(chunk, 0, BLOCKLEN);
+            while (data.position() != data.limit()) {
+                data.get(chunk, 0, BLOCKLEN);
                 resBuffer.put(xor(algorithm.encrypt(initialVector), chunk));
                 initialVector = Arrays.copyOf(chunk, chunk.length);
             }
@@ -169,15 +167,14 @@ public class Cryptography {
         }
     }
 
-    private byte @NonNull[] ofbCrypt(byte @NonNull[] data, byte @NonNull[] initialVector) {
+    private byte @NonNull[] ofbCrypt(@NonNull ByteBuffer data, byte @NonNull[] initialVector) {
         // TODO: initVector must by len == BLOCKLEN.
         try {
             byte[] chunk = new byte[BLOCKLEN];
-            ByteBuffer buffer = normalizeData(data, BLOCKLEN);
-            ByteBuffer resBuffer = ByteBuffer.allocate(buffer.limit());
+            ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
 
-            while (buffer.position() != buffer.limit()) {
-                buffer.get(chunk, 0, BLOCKLEN);
+            while (data.position() != data.limit()) {
+                data.get(chunk, 0, BLOCKLEN);
                 initialVector = algorithm.encrypt(initialVector);
                 resBuffer.put(xor(initialVector, chunk));
             }
@@ -187,16 +184,15 @@ public class Cryptography {
         }
     }
 
-    private byte @NonNull[] ctrCrypt(byte @NonNull[] data, byte @NonNull[] startCounter) {
+    private byte @NonNull[] ctrCrypt(@NonNull ByteBuffer data, byte @NonNull[] startCounter) {
         // TODO: initVector must by len == BLOCKLEN.
         try {
             long counter = ByteBuffer.wrap(startCounter).position(0).getLong();
             byte[] chunk = new byte[BLOCKLEN];
-            ByteBuffer buffer = normalizeData(data, BLOCKLEN);
-            ByteBuffer resBuffer = ByteBuffer.allocate(buffer.limit());
+            ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
 
-            while (buffer.position() != buffer.limit()) {
-                buffer.get(chunk, 0, BLOCKLEN);
+            while (data.position() != data.limit()) {
+                data.get(chunk, 0, BLOCKLEN);
                 resBuffer.put(xor(algorithm.encrypt(Longs.toByteArray(counter)), chunk));
                 counter++;
             }
@@ -206,18 +202,17 @@ public class Cryptography {
         }
     }
 
-    private byte @NonNull[] rdCrypt(byte @NonNull[] data,byte @NonNull[] initialVector) {
+    private byte @NonNull[] rdCrypt(@NonNull ByteBuffer data, byte @NonNull[] initialVector) {
         //TODO: exception initVector must be lens of 16 byte.
         try {
             ByteBuffer init = ByteBuffer.wrap(initialVector).position(0);
             long counter = init.getLong();
             long delta = init.getLong();
-            ByteBuffer buffer = normalizeData(data, BLOCKLEN);
-            ByteBuffer resBuffer = ByteBuffer.allocate(buffer.limit());
+            ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
             byte[] chunk = new byte[BLOCKLEN];
 
-            while (buffer.position() != buffer.limit()) {
-                buffer.get(chunk, 0, BLOCKLEN);
+            while (data.position() != data.limit()) {
+                data.get(chunk, 0, BLOCKLEN);
                 resBuffer.put(xor(algorithm.encrypt(Longs.toByteArray(counter)), chunk));
                 counter += delta;
             }
@@ -229,11 +224,10 @@ public class Cryptography {
 
     /**
      * @param data массив байт для приведения к размеру кратному размеру блока
-     * @param blockLen размер блока в байтах
      * @return нормализованная дата
      */
-    private @NonNull ByteBuffer normalizeData(byte @NonNull[] data, int blockLen) {
-        int targetLen = (int)Math.ceil(data.length*1.0/blockLen) * blockLen;
+    private @NonNull ByteBuffer normalizeData(byte @NonNull[] data) {
+        int targetLen = (int)Math.ceil(data.length*1.0/BLOCKLEN) * BLOCKLEN;
         ByteBuffer bytes = ByteBuffer.allocate(targetLen);
         bytes.put(data);
         if (data.length%8 != 0){
