@@ -5,7 +5,7 @@ import org.example.cryptography.exceptions.XORException;
 
 import java.nio.ByteBuffer;
 
-public interface CryptoInterface {
+public interface AlgorithmInterface {
     byte[] decrypt(byte[] data) throws XORException;
     byte[] encrypt(byte[] data) throws XORException;
     byte[] encrypt(@NonNull ByteBuffer data) throws XORException;

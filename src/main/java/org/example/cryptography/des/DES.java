@@ -1,13 +1,13 @@
 package org.example.cryptography.des;
 
 import lombok.NonNull;
-import org.example.cryptography.CryptoInterface;
+import org.example.cryptography.AlgorithmInterface;
 import org.example.cryptography.exceptions.KeyLenException;
 import org.example.cryptography.exceptions.XORException;
 
 import java.nio.ByteBuffer;
 
-public class DES implements CryptoInterface {
+public class DES implements AlgorithmInterface {
     private final CustomBitSet key;
     private final CustomBitSet[] roundKeys;
 

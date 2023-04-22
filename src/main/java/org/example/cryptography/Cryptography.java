@@ -29,7 +29,7 @@ public class Cryptography {
     public enum Mode { ECB, CBC, CFB, OFB, CTR, RD }
 
     private static final int BLOCKSIZE = 8;
-    CryptoInterface algorithm;
+    AlgorithmInterface algorithm;
     Mode mode;
 
     public Cryptography(@NonNull Algorithm algorithm, @NonNull Mode mode,
