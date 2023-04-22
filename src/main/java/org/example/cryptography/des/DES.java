@@ -2,7 +2,6 @@ package org.example.cryptography.des;
 
 import lombok.NonNull;
 import org.example.cryptography.CryptoInterface;
-import org.example.cryptography.CustomBitSet;
 import org.example.cryptography.exceptions.KeyLenException;
 import org.example.cryptography.exceptions.XORException;
 

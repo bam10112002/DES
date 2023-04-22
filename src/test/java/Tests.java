@@ -3,7 +3,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class Tests {
+class SomeTests {
     @Test
     void ECBTest() throws Exception {
         String key = "ARTEMFGA";

@@ -3,6 +3,7 @@ package org.example.cryptography;
 import com.google.common.primitives.Longs;
 import lombok.NonNull;
 import org.example.cryptography.des.DES;
+import org.example.cryptography.exceptions.KeyLenException;
 
 
 import java.nio.ByteBuffer;
@@ -23,16 +24,16 @@ public class Cryptography {
      * OFB
      * CTR
      * RD
-     *              важно, что initvector длинной 16 байт.
+     *              важно, что initVector длинной 16 байт.
      */
     public enum Mode { ECB, CBC, CFB, OFB, CTR, RD }
 
-    private static final int BLOCKLEN = 8;
+    private static final int BLOCKSIZE = 8;
     CryptoInterface algorithm;
     Mode mode;
 
     public Cryptography(@NonNull Algorithm algorithm, @NonNull Mode mode,
-                        @NonNull String key) throws Exception {
+                        @NonNull String key) throws KeyLenException {
 
         if (algorithm == Algorithm.DES) {
             this.algorithm = new DES(key);
@@ -97,10 +98,10 @@ public class Cryptography {
         // TODO: initVector must by len == BLOCKLEN.
         try {
             ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
-            byte[] chunk = new byte[BLOCKLEN];
+            byte[] chunk = new byte[BLOCKSIZE];
 
             while (data.position() != data.limit()) {
-                data.get(chunk, 0, BLOCKLEN);
+                data.get(chunk, 0, BLOCKSIZE);
                 chunk = algorithm.encrypt(xor(chunk, initialVector));
                 resBuffer.put(chunk);
                 initialVector = Arrays.copyOf(chunk,chunk.length);
@@ -117,10 +118,10 @@ public class Cryptography {
           try {
             // TODO: Выкинуть ошибку, такого быть не должно
             ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
-            byte[] chunk = new byte[BLOCKLEN];
+            byte[] chunk = new byte[BLOCKSIZE];
 
             while (data.position() != data.limit()) {
-                data.get(chunk, 0, BLOCKLEN);
+                data.get(chunk, 0, BLOCKSIZE);
                 resBuffer.put(xor(algorithm.decrypt(chunk), initialVector));
                 initialVector = Arrays.copyOf(chunk,chunk.length);
             }
@@ -138,10 +139,10 @@ public class Cryptography {
         // TODO: initVector must by len == BLOCKLEN.
         try {
             ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
-            byte[] chunk = new byte[BLOCKLEN];
+            byte[] chunk = new byte[BLOCKSIZE];
 
             while (data.position() != data.limit()) {
-                data.get(chunk, 0, BLOCKLEN);
+                data.get(chunk, 0, BLOCKSIZE);
                 initialVector = xor(algorithm.encrypt(initialVector), chunk);
                 resBuffer.put(initialVector);
             }
@@ -154,10 +155,10 @@ public class Cryptography {
         // TODO: initVector must by len == BLOCKLEN.
         try {
             ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
-            byte[] chunk = new byte[BLOCKLEN];
+            byte[] chunk = new byte[BLOCKSIZE];
 
             while (data.position() != data.limit()) {
-                data.get(chunk, 0, BLOCKLEN);
+                data.get(chunk, 0, BLOCKSIZE);
                 resBuffer.put(xor(algorithm.encrypt(initialVector), chunk));
                 initialVector = Arrays.copyOf(chunk, chunk.length);
             }
@@ -170,11 +171,11 @@ public class Cryptography {
     private byte @NonNull[] ofbCrypt(@NonNull ByteBuffer data, byte @NonNull[] initialVector) {
         // TODO: initVector must by len == BLOCKLEN.
         try {
-            byte[] chunk = new byte[BLOCKLEN];
+            byte[] chunk = new byte[BLOCKSIZE];
             ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
 
             while (data.position() != data.limit()) {
-                data.get(chunk, 0, BLOCKLEN);
+                data.get(chunk, 0, BLOCKSIZE);
                 initialVector = algorithm.encrypt(initialVector);
                 resBuffer.put(xor(initialVector, chunk));
             }
@@ -188,11 +189,11 @@ public class Cryptography {
         // TODO: initVector must by len == BLOCKLEN.
         try {
             long counter = ByteBuffer.wrap(startCounter).position(0).getLong();
-            byte[] chunk = new byte[BLOCKLEN];
+            byte[] chunk = new byte[BLOCKSIZE];
             ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
 
             while (data.position() != data.limit()) {
-                data.get(chunk, 0, BLOCKLEN);
+                data.get(chunk, 0, BLOCKSIZE);
                 resBuffer.put(xor(algorithm.encrypt(Longs.toByteArray(counter)), chunk));
                 counter++;
             }
@@ -209,10 +210,10 @@ public class Cryptography {
             long counter = init.getLong();
             long delta = init.getLong();
             ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
-            byte[] chunk = new byte[BLOCKLEN];
+            byte[] chunk = new byte[BLOCKSIZE];
 
             while (data.position() != data.limit()) {
-                data.get(chunk, 0, BLOCKLEN);
+                data.get(chunk, 0, BLOCKSIZE);
                 resBuffer.put(xor(algorithm.encrypt(Longs.toByteArray(counter)), chunk));
                 counter += delta;
             }
@@ -227,7 +228,7 @@ public class Cryptography {
      * @return нормализованная дата
      */
     private @NonNull ByteBuffer normalizeData(byte @NonNull[] data) {
-        int targetLen = (int)Math.ceil(data.length*1.0/BLOCKLEN) * BLOCKLEN;
+        int targetLen = (int)Math.ceil(data.length*1.0/ BLOCKSIZE) * BLOCKSIZE;
         ByteBuffer bytes = ByteBuffer.allocate(targetLen);
         bytes.put(data);
         if (data.length%8 != 0){

@@ -1,4 +1,4 @@
-package org.example.cryptography;
+package org.example.cryptography.des;
 
 
 import lombok.Getter;
@@ -35,15 +35,13 @@ public class CustomBitSet {
     }
 
     public CustomBitSet(@NonNull String str) {
-        // String to long
         len = str.length()*8;
-        long data = 0L;
+        long value = 0L;
         for (byte b : str.getBytes())
-            data = (data << 8) + (b & 255);
-        System.out.println(data);
+            value = (value << 8) + (b & 255);
     }
 
-    public @NonNull CustomBitSet(@NonNull boolean[] bites) {
+    public CustomBitSet(boolean @NonNull[] bites) {
         this(0,bites.length);
         for(int i = 0; i < bites.length; i++)
             set(i, bites[i]);
@@ -58,9 +56,6 @@ public class CustomBitSet {
         data = (data << k) | (data >>> (len - k));
         data = data << len >>> len;
     }
-//    public void rightShift(int k) {
-//        data = (data >> k) | (data << (len - k));
-//    }
 
     public void set(int ind, boolean bite) {
         if (bite) {
@@ -98,7 +93,7 @@ public class CustomBitSet {
      * Метод отвечающий за объединение двух CustomBitSet
      * Пример: 101.concat(011) = 101011
      * @param bitSet правая половина для объединения двух CustomBitSet
-     * @return обединение двух CustomBitSet
+     * @return объединение двух CustomBitSet
      */
     public @NonNull CustomBitSet concat(@NonNull CustomBitSet bitSet) {
         if (len == 0)
