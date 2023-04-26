@@ -11,7 +11,7 @@ class RSATest {
 //        long start = System.currentTimeMillis();
         String data = "Hello my name is Artem";
         RSAKeyGenerator gen = new RSAKeyGenerator();
-        KeyPair keys = gen.generateKeyPair(512);
+        KeyPair keys = gen.generateKeyPair(1024*4);
         byte[] encripted = RSA.encript(data.getBytes(), keys);
         String decripted = new String(RSA.decript(encripted, keys));
         System.out.println(encripted);

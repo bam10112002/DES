@@ -2,7 +2,6 @@ package org.example.cryptography.rsa.keys;
 
 import lombok.NonNull;
 import org.example.cryptography.rsa.simplicityTests.MillerRabinTest;
-import org.example.cryptography.rsa.simplicityTests.ParallelMillerRabinTest;
 import org.example.cryptography.rsa.simplicityTests.SimplicityTest;
 
 import java.math.BigInteger;
@@ -11,9 +10,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class RSAKeyGenerator {
+public class ParallelRSAKeyGenerator {
     private static final Random rand = new Random();
-    private static final SimplicityTest test = new ParallelMillerRabinTest();
+    private static final SimplicityTest test = new MillerRabinTest();
 
     public @NonNull KeyPair generateKeyPair(int keyLen) throws InterruptedException {
         BigInteger p = randomSimplisityBigInteger(BigInteger.valueOf(0L), getMax(keyLen));
@@ -38,13 +37,21 @@ public class RSAKeyGenerator {
     }
 
     private @NonNull BigInteger randomSimplisityBigInteger(@NonNull BigInteger min, @NonNull BigInteger max) throws InterruptedException {
-        BigInteger result;
+        List<BigInteger> res = Collections.synchronizedList(new ArrayList<>());
+        ExecutorService executorService;
 
         do {
-            result = new BigInteger(max.bitLength(), rand);
-        } while (!test.check(result, 0.9999));
+            executorService = Executors.newFixedThreadPool(20);
+            for (int i = 0; i < 10; i++) {
+                executorService.submit(new Check(new BigInteger(max.bitLength(), rand), res));
+            }
+            executorService.shutdown();
+            executorService.awaitTermination(10, TimeUnit.MINUTES);
 
-        return result;
+        } while (res.isEmpty());
+
+        System.out.println(res.size());
+        return res.get(0);
     }
 
     private static BigInteger getMax(int len) {
