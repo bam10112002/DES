@@ -1,22 +1,21 @@
+import org.example.cryptography.exceptions.XORException;
 import org.example.cryptography.rsa.RSA;
 import org.example.cryptography.rsa.keys.KeyPair;
-import org.example.cryptography.rsa.keys.RSAKeyGenerator;
+import org.example.cryptography.rsa.keys.ParallelRSAKeyGenerator;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RSATest {
     @Test
-    void Test1() throws InterruptedException {
-//        long start = System.currentTimeMillis();
+    void Test1() throws InterruptedException, XORException {
         String data = "Hello my name is Artem";
-        RSAKeyGenerator gen = new RSAKeyGenerator();
-        KeyPair keys = gen.generateKeyPair(1024*4);
-        byte[] encripted = RSA.encript(data.getBytes(), keys);
-        String decripted = new String(RSA.decript(encripted, keys));
-        System.out.println(encripted);
-
+        var gen = new ParallelRSAKeyGenerator();
+        KeyPair keys = gen.generateKeyPair(1024);
+        RSA rsa = new RSA(keys);
+        byte[] encripted = rsa.encrypt(data.getBytes());
+        String decripted = new String(rsa.decrypt(encripted));
         assertEquals(data, decripted);
-
     }
+
 }

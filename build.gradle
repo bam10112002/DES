@@ -14,6 +14,9 @@ dependencies {
     compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.26'
     annotationProcessor 'org.projectlombok:lombok:1.18.26'
 
+    // https://mvnrepository.com/artifact/one.util/streamex
+    runtimeOnly group: 'one.util', name: 'streamex', version: '0.8.1'
+
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     testImplementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.6'
 

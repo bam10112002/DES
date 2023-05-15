@@ -1,24 +1,37 @@
 import org.example.cryptography.Cryptography;
+import org.example.cryptography.des.DES;
+import org.example.cryptography.exceptions.XORException;
+import org.example.cryptography.keys.DESKey;
+import org.example.cryptography.keys.Key;
+import org.example.cryptography.keys.KeyGenerator;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DESTest {
+    String dataString = "Hellomy.";
+    Key key = KeyGenerator.generateKey(Cryptography.Algorithm.DES);
+
+    @Test
+    void OnlyDes() throws XORException {
+        for(int i = 0; i < 100; i++) {
+            key = KeyGenerator.generateKey(Cryptography.Algorithm.DES);
+            DES des = new DES(((DESKey) key).getValue());
+            String decripted = new String(des.decrypt(des.encrypt(dataString.getBytes())));
+            assertEquals(decripted, dataString);
+        }
+    }
     @Test
     void ECBTest() throws Exception {
-        String key = "ARTEMFGA";
-        String dataString = "Lorem ipsum dolor sit amet, nou.";
         Cryptography cryptography = new Cryptography(Cryptography.Algorithm.DES, Cryptography.Mode.ECB, key);
-
         String encrypted = new String(cryptography.encrypt(dataString.getBytes()));
         String decrypted = new String(cryptography.decrypt(encrypted.getBytes()));
         assertEquals(decrypted, dataString);
     }
     @Test
     void CFBTest() throws Exception {
-        String key = "ARTEMFGA";
+//        var key = KeyGenerator.generateKey(Cryptography.Algorithm.DES);
         String initVector = "HJGSDURG";
-        String dataString = "Lorem ipsum dolor sit amet, nou.";
         Cryptography cryptography = new Cryptography(Cryptography.Algorithm.DES, Cryptography.Mode.CFB, key);
 
         String encrypted = new String(cryptography.encrypt(dataString.getBytes(), initVector.getBytes()));
@@ -27,9 +40,8 @@ class DESTest {
     }
     @Test
     void OFBTest() throws Exception {
-        String key = "ARTEMFGA";
+//        var key = KeyGenerator.generateKey(Cryptography.Algorithm.DES);
         String initVector = "HJGSDURG";
-        String dataString = "Lorem ipsum dolor sit amet, nou.";
         Cryptography cryptography = new Cryptography(Cryptography.Algorithm.DES, Cryptography.Mode.OFB, key);
 
         String encrypted = new String(cryptography.encrypt(dataString.getBytes(), initVector.getBytes()));
@@ -39,9 +51,8 @@ class DESTest {
 
     @Test
     void RDTest() throws Exception {
-        String key = "ARTEMFGA";
+//        var key = KeyGenerator.generateKey(Cryptography.Algorithm.DES);
         String initVector = "HJGSDURGGKMVDYQC";
-        String dataString = "Lorem ipsum dolor sit amet, nou.";
         Cryptography cryptography = new Cryptography(Cryptography.Algorithm.DES, Cryptography.Mode.RD, key);
 
         String encrypted = new String(cryptography.encrypt(dataString.getBytes(), initVector.getBytes()));
@@ -50,9 +61,8 @@ class DESTest {
     }
     @Test
     void CBCTest() throws Exception {
-        String key = "ARTEMFGA";
+//        var key = KeyGenerator.generateKey(Cryptography.Algorithm.DES);
         String initVector = "HJGSDURG";
-        String dataString = "Integer ornare metus et posuere.";
         Cryptography cryptography = new Cryptography(Cryptography.Algorithm.DES, Cryptography.Mode.CBC, key);
 
         String encrypted = new String(cryptography.encrypt(dataString.getBytes(), initVector.getBytes()));
@@ -61,9 +71,8 @@ class DESTest {
     }
     @Test
     void CTRTest() throws Exception {
-        String key = "ARTEMFGA";
+//        var key = KeyGenerator.generateKey(Cryptography.Algorithm.DES);
         String initVector = "HJGSDURG";
-        String dataString = "Lorem ipsum dolor sit amet, nou.";
         Cryptography cryptography = new Cryptography(Cryptography.Algorithm.DES, Cryptography.Mode.CTR, key);
 
         String encrypted = new String(cryptography.encrypt(dataString.getBytes(), initVector.getBytes()));

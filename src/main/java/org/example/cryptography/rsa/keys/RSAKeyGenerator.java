@@ -13,11 +13,12 @@ import java.util.concurrent.TimeUnit;
 
 public class RSAKeyGenerator {
     private static final Random rand = new Random();
-    private static final SimplicityTest test = new ParallelMillerRabinTest();
+    private static final SimplicityTest test = new MillerRabinTest();
 
     public @NonNull KeyPair generateKeyPair(int keyLen) throws InterruptedException {
-        BigInteger p = randomSimplisityBigInteger(BigInteger.valueOf(0L), getMax(keyLen));
-        BigInteger q = randomSimplisityBigInteger(BigInteger.valueOf(0L), getMax(keyLen));
+        BigInteger max = getMax(keyLen);
+        BigInteger p = randomSimplisityBigInteger(BigInteger.valueOf(0L), max);
+        BigInteger q = randomSimplisityBigInteger(BigInteger.valueOf(0L), max);
         BigInteger phi = (p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE)));
         BigInteger e = randomBigInteger(BigInteger.valueOf(0L).setBit(keyLen), phi);
         while (hasCommonDivisors(phi, e)) {
@@ -50,7 +51,7 @@ public class RSAKeyGenerator {
     private static BigInteger getMax(int len) {
         BigInteger bigInt = BigInteger.valueOf(0L);
         bigInt = bigInt.setBit(len);
-        for (int i = 0; i < bigInt.bitLength(); i++) {
+        for (int i = 0; i < len; i++) {
             bigInt = bigInt.setBit(i);
         }
         return bigInt;

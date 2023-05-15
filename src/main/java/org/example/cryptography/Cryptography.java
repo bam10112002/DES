@@ -4,17 +4,21 @@ import com.google.common.primitives.Longs;
 import lombok.NonNull;
 import org.example.cryptography.des.DES;
 import org.example.cryptography.exceptions.KeyLenException;
-
+import org.example.cryptography.keys.DESKey;
+import org.example.cryptography.keys.Key;
+import org.example.cryptography.rsa.RSA;
+import org.example.cryptography.rsa.keys.KeyPair;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 public class Cryptography {
     /**
      * DES (Data Encryption Standard) - блочный симметричный алгоритм шифрования
      */
-    public enum Algorithm { DES}
+    public enum Algorithm { DES, RSA}
 
     /**
      * ECB (Electronic Codebook) - каждый блок шифруется отдельно, не взаимодействуя с другими блоками
@@ -28,35 +32,56 @@ public class Cryptography {
      */
     public enum Mode { ECB, CBC, CFB, OFB, CTR, RD }
 
-    private static final int BLOCKSIZE = 8;
+    private int BLOCKSIZE = 8;
+    Algorithm alg;
     AlgorithmInterface algorithm;
     Mode mode;
 
     public Cryptography(@NonNull Algorithm algorithm, @NonNull Mode mode,
-                        @NonNull String key) throws KeyLenException {
+                        @NonNull Key key) throws KeyLenException {
 
-        if (algorithm == Algorithm.DES) {
-            this.algorithm = new DES(key);
+        switch (algorithm) {
+            case DES -> this.algorithm = new DES(((DESKey)key).getValue());
+            case RSA -> {
+                this.algorithm = new RSA((KeyPair)key);
+                BLOCKSIZE = ((KeyPair)key).getN().length-1;
+            }
         }
         this.mode = mode;
+        alg = algorithm;
     }
 
     public byte @NonNull[] encrypt(byte @NonNull[] data) {
+        ByteBuffer normalizedData;
+        if (alg == Algorithm.DES)
+            normalizedData = normalizeData(data);
+        else
+            normalizedData = ByteBuffer.wrap(data);
+
         if (Objects.requireNonNull(mode) == Mode.ECB) {
-            return ecbEncrypt(normalizeData(data));
+            return ecbEncrypt(normalizedData);
         }
         return new byte[0];
     }
     public byte @NonNull[] decrypt(byte @NonNull[] data) {
+        if (alg == Algorithm.DES) {
+
+        }
+
         if (Objects.requireNonNull(mode) == Mode.ECB) {
-            return ecbDecrypt(normalizeData(data));
+            return denormalizeData(ecbDecrypt(ByteBuffer.wrap(data)));
         }
         return new byte[0];
     }
 
     public byte @NonNull[] encrypt(byte @NonNull[] data, byte[] initialVector) {
         initialVector = Arrays.copyOf(initialVector, initialVector.length);
-        ByteBuffer normalizedData = normalizeData(data);
+        ByteBuffer normalizedData;
+        if (alg == Algorithm.DES)
+            normalizedData = normalizeData(data);
+        else
+            normalizedData = ByteBuffer.wrap(data);
+
         switch (mode){
             case CBC -> { return cbcEncrypt(normalizedData, initialVector); }
             case CFB -> { return cfbEncrypt(normalizedData, initialVector); }
@@ -69,26 +94,44 @@ public class Cryptography {
     public byte @NonNull[] decrypt(byte @NonNull[] data, byte[] initialVector) {
         initialVector = Arrays.copyOf(initialVector, initialVector.length);
         ByteBuffer convertedData = ByteBuffer.wrap(data);
+        byte[] res;
         switch (mode){
-            case CBC -> { return cbcDecrypt(convertedData, initialVector); }
-            case CFB -> { return cfbDecrypt(convertedData, initialVector); }
-            case OFB -> { return ofbCrypt(convertedData, initialVector); }
-            case CTR -> { return ctrCrypt(convertedData, initialVector); }
-            case RD  -> { return rdCrypt(convertedData, initialVector); }
+            case CBC -> { res = cbcDecrypt(convertedData, initialVector); }
+            case CFB -> { res =  cfbDecrypt(convertedData, initialVector); }
+            case OFB -> { res =  ofbCrypt(convertedData, initialVector); }
+            case CTR -> { res =  ctrCrypt(convertedData, initialVector); }
+            case RD  -> { res =  rdCrypt(convertedData, initialVector); }
             default -> { return new byte[0]; }
         }
+        return denormalizeData(res);
     }
 
     private byte @NonNull[] ecbEncrypt(@NonNull ByteBuffer data) {
         try {
-            return algorithm.encrypt(data);
+            ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
+            byte[] chunk = new byte[BLOCKSIZE];
+
+            while (data.position() != data.limit()) {
+                data.get(chunk, 0, BLOCKSIZE);
+                resBuffer.put(algorithm.encrypt(chunk));
+            }
+            return resBuffer.array();
+
         } catch (Exception e) {
             return new byte[0];
         }
     }
     private byte @NonNull[] ecbDecrypt(@NonNull ByteBuffer data) {
         try {
-            return algorithm.decrypt(data);
+            ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
+            byte[] chunk = new byte[BLOCKSIZE];
+
+            while (data.position() != data.limit()) {
+                data.get(chunk, 0, BLOCKSIZE);
+                resBuffer.put(algorithm.decrypt(chunk));
+            }
+            return resBuffer.array();
+
         } catch (Exception e) {
             return new byte[0];
         }
@@ -237,6 +280,16 @@ public class Cryptography {
             }
         }
         return bytes.position(0);
+    }
+
+    private byte @NonNull[] denormalizeData(byte[] arr) {
+        int lastIndex = arr.length - 1;
+        while (lastIndex >= 0 && arr[lastIndex] == 0) {
+            lastIndex--;
+        }
+        byte[] resultArray = new byte[lastIndex + 1];
+        System.arraycopy(arr, 0, resultArray, 0, lastIndex + 1);
+        return resultArray;
     }
 
     private byte @NonNull[] xor(byte @NonNull[] left, byte @NonNull[] right) {

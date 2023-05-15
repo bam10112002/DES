@@ -8,8 +8,8 @@ import org.example.cryptography.Cryptography;
 public class DESKey extends Key {
     @Getter
     private long value;
-    public DESKey(Cryptography.Algorithm algorithm, byte[] key) throws Exception {
-        super(algorithm);
+    public DESKey(byte[] key) throws Exception {
+        super(Cryptography.Algorithm.DES);
 
         if (key.length != 8) { throw new Exception("key len must by 8 byte."); }
         value = Longs.fromByteArray(key);
