@@ -1,6 +1,5 @@
 package org.example.cryptography;
 
-import com.google.common.primitives.Longs;
 import lombok.NonNull;
 import org.example.cryptography.des.DES;
 import org.example.cryptography.exceptions.KeyLenException;
@@ -8,11 +7,13 @@ import org.example.cryptography.keys.DESKey;
 import org.example.cryptography.keys.Key;
 import org.example.cryptography.rsa.RSA;
 import org.example.cryptography.rsa.keys.KeyPair;
+import org.example.cryptography.twofish.TwoFish;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.security.InvalidKeyException;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.stream.IntStream;
 
 public class Cryptography {
     /**
@@ -38,12 +39,13 @@ public class Cryptography {
     Mode mode;
 
     public Cryptography(@NonNull Algorithm algorithm, @NonNull Mode mode,
-                        @NonNull Key key) throws KeyLenException {
+                        @NonNull Key key) throws KeyLenException, InvalidKeyException {
 
         switch (algorithm) {
             case DES -> this.algorithm = new DES(((DESKey)key).getValue());
             case TWOFISH -> {
-
+                this.algorithm = new TwoFish(key);
+                BLOCKSIZE = 16;
             }
             case RSA -> {
                 this.algorithm = new RSA((KeyPair)key);
@@ -56,7 +58,7 @@ public class Cryptography {
 
     public byte @NonNull[] encrypt(byte @NonNull[] data) {
         ByteBuffer normalizedData;
-        if (alg == Algorithm.DES)
+        if (alg == Algorithm.DES || alg == Algorithm.TWOFISH)
             normalizedData = normalizeData(data);
         else
             normalizedData = ByteBuffer.wrap(data);
@@ -80,12 +82,12 @@ public class Cryptography {
     public byte @NonNull[] encrypt(byte @NonNull[] data, byte[] initialVector) {
         initialVector = Arrays.copyOf(initialVector, initialVector.length);
         ByteBuffer normalizedData;
-        if (alg == Algorithm.DES)
+        if (alg == Algorithm.DES || alg == Algorithm.TWOFISH)
             normalizedData = normalizeData(data);
         else
             normalizedData = ByteBuffer.wrap(data);
 
-        switch (mode){
+        switch (mode) {
             case CBC -> { return cbcEncrypt(normalizedData, initialVector); }
             case CFB -> { return cfbEncrypt(normalizedData, initialVector); }
             case OFB -> { return ofbCrypt(normalizedData, initialVector); }
@@ -99,11 +101,11 @@ public class Cryptography {
         ByteBuffer convertedData = ByteBuffer.wrap(data);
         byte[] res;
         switch (mode){
-            case CBC -> { res = cbcDecrypt(convertedData, initialVector); }
-            case CFB -> { res =  cfbDecrypt(convertedData, initialVector); }
-            case OFB -> { res =  ofbCrypt(convertedData, initialVector); }
-            case CTR -> { res =  ctrCrypt(convertedData, initialVector); }
-            case RD  -> { res =  rdCrypt(convertedData, initialVector); }
+            case CBC -> res = cbcDecrypt(convertedData, initialVector);
+            case CFB -> res =  cfbDecrypt(convertedData, initialVector);
+            case OFB -> res =  ofbCrypt(convertedData, initialVector);
+            case CTR -> res =  ctrCrypt(convertedData, initialVector);
+            case RD  -> res =  rdCrypt(convertedData, initialVector);
             default -> { return new byte[0]; }
         }
         return denormalizeData(res);
@@ -234,14 +236,14 @@ public class Cryptography {
     private byte @NonNull[] ctrCrypt(@NonNull ByteBuffer data, byte @NonNull[] startCounter) {
         // TODO: initVector must by len == BLOCKLEN.
         try {
-            long counter = ByteBuffer.wrap(startCounter).position(0).getLong();
+            BigInteger counter = new BigInteger(ByteBuffer.wrap(startCounter).position(0).array());
             byte[] chunk = new byte[BLOCKSIZE];
             ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
 
             while (data.position() != data.limit()) {
                 data.get(chunk, 0, BLOCKSIZE);
-                resBuffer.put(xor(algorithm.encrypt(Longs.toByteArray(counter)), chunk));
-                counter++;
+                resBuffer.put(xor(algorithm.encrypt(counter.toByteArray()), chunk));
+                counter = counter.add(BigInteger.ONE);
             }
             return resBuffer.array();
         } catch (Exception e) {
@@ -253,15 +255,20 @@ public class Cryptography {
         //TODO: exception initVector must be lens of 16 byte.
         try {
             ByteBuffer init = ByteBuffer.wrap(initialVector).position(0);
-            long counter = init.getLong();
-            long delta = init.getLong();
+            byte[] temp = new byte[BLOCKSIZE];
+            init.get(temp,0,BLOCKSIZE);
+            BigInteger counter = new BigInteger(temp);
+
+            init.get(temp,0,BLOCKSIZE);
+            BigInteger delta = new BigInteger(temp);
+
             ByteBuffer resBuffer = ByteBuffer.allocate(data.limit());
             byte[] chunk = new byte[BLOCKSIZE];
 
             while (data.position() != data.limit()) {
                 data.get(chunk, 0, BLOCKSIZE);
-                resBuffer.put(xor(algorithm.encrypt(Longs.toByteArray(counter)), chunk));
-                counter += delta;
+                resBuffer.put(xor(algorithm.encrypt(counter.toByteArray()), chunk));
+                counter = counter.add(delta);
             }
             return resBuffer.array();
         } catch (Exception e) {

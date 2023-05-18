@@ -1,11 +1,14 @@
 package org.example.cryptography.twofish;
 
-import java.security.InvalidKeyException;
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.Scanner;
+import lombok.NonNull;
+import org.example.cryptography.AlgorithmInterface;
+import org.example.cryptography.exceptions.XORException;
+import org.example.cryptography.keys.Key;
 
-public final class TwoFish
+import java.nio.ByteBuffer;
+import java.security.InvalidKeyException;
+
+public final class TwoFish implements AlgorithmInterface
 {
 
 // Constants and variables
@@ -24,10 +27,10 @@ public final class TwoFish
     private static final int SK_BUMP = 0x01010101;
     private static final int SK_ROTL = 9;
 
-    private TwoFishKey sessionKey;
+    private TwoFishSessionKey sessionKey;
 
-    public TwoFish (byte[] key) throws InvalidKeyException {
-        sessionKey = makeSessionKey(key);
+    public TwoFish (Key key) throws InvalidKeyException {
+        sessionKey = makeSessionKey(((TwoFishKey)key).getKey());
     }
 
     /** Fixed 8x8 permutation S-boxes */
@@ -258,7 +261,7 @@ public final class TwoFish
     private static final int Mx_X( int x ) { return x ^ LFSR2(x); }            // 5B
     private static final int Mx_Y( int x ) { return x ^ LFSR1(x) ^ LFSR2(x); } // EF
 
-    public static TwoFishKey makeSessionKey (byte[] k)
+    public static TwoFishSessionKey makeSessionKey (byte[] k)
             throws InvalidKeyException {
         if (k == null)
             throw new InvalidKeyException("Empty key");
@@ -335,39 +338,38 @@ public final class TwoFish
                     sBox[0x200+2*i+1] = MDS[3][(P[P_31][(P[P_32][b3] & 0xFF) ^ b3(k1)] & 0xFF) ^ b3(k0)];
             }
         }
-        return new TwoFishKey(sBox, subKeys);
+        return new TwoFishSessionKey(sBox, subKeys);
     }
 
     /**
      * Encrypt exactly one block of plaintext.
      *
-     * @param in        The plaintext.
-     * @param inOffset   Index of in from which to start considering data.
-     * @param sessionKey  The session key to use for encryption.
+     * @param data        The plaintext.
      * @return The ciphertext generated from a plaintext using the session key.
      */
-    public byte[]
-    blockEncrypt (byte[] in, int inOffset) {
+    @Override
+    public byte[] encrypt(byte[] data) {
+        int inOffset = 0;
 //        Object[] sk = (Object[]) sessionKey; // extract S-box and session key
         int[] sBox = sessionKey.getsBox();
         int[] sKey = sessionKey.getsKey();
 
-        int x0 = (in[inOffset++] & 0xFF)       |
-                (in[inOffset++] & 0xFF) <<  8 |
-                (in[inOffset++] & 0xFF) << 16 |
-                (in[inOffset++] & 0xFF) << 24;
-        int x1 = (in[inOffset++] & 0xFF)       |
-                (in[inOffset++] & 0xFF) <<  8 |
-                (in[inOffset++] & 0xFF) << 16 |
-                (in[inOffset++] & 0xFF) << 24;
-        int x2 = (in[inOffset++] & 0xFF)       |
-                (in[inOffset++] & 0xFF) <<  8 |
-                (in[inOffset++] & 0xFF) << 16 |
-                (in[inOffset++] & 0xFF) << 24;
-        int x3 = (in[inOffset++] & 0xFF)       |
-                (in[inOffset++] & 0xFF) <<  8 |
-                (in[inOffset++] & 0xFF) << 16 |
-                (in[inOffset++] & 0xFF) << 24;
+        int x0 = (data[inOffset++] & 0xFF)       |
+                (data[inOffset++] & 0xFF) <<  8 |
+                (data[inOffset++] & 0xFF) << 16 |
+                (data[inOffset++] & 0xFF) << 24;
+        int x1 = (data[inOffset++] & 0xFF)       |
+                (data[inOffset++] & 0xFF) <<  8 |
+                (data[inOffset++] & 0xFF) << 16 |
+                (data[inOffset++] & 0xFF) << 24;
+        int x2 = (data[inOffset++] & 0xFF)       |
+                (data[inOffset++] & 0xFF) <<  8 |
+                (data[inOffset++] & 0xFF) << 16 |
+                (data[inOffset++] & 0xFF) << 24;
+        int x3 = (data[inOffset++] & 0xFF)       |
+                (data[inOffset++] & 0xFF) <<  8 |
+                (data[inOffset++] & 0xFF) << 16 |
+                (data[inOffset++] & 0xFF) << 24;
 
         x0 ^= sKey[INPUT_WHITEN    ];
         x1 ^= sKey[INPUT_WHITEN + 1];
@@ -409,35 +411,44 @@ public final class TwoFish
         return result;
     }
 
+    @Override
+    public byte[] encrypt(@NonNull ByteBuffer data) throws XORException {
+        return encrypt(data.array());
+    }
+
+    @Override
+    public byte[] decrypt(@NonNull ByteBuffer data) throws XORException {
+        return decrypt(data.array());
+    }
+
     /**
      * Decrypt exactly one block of ciphertext.
      *
-     * @param in        The ciphertext.
-     * @param inOffset   Index of in from which to start considering data.
-     * @param sessionKey  The session key to use for decryption.
+     * @param data        The ciphertext.
      * @return The plaintext generated from a ciphertext using the session key.
      */
-    public byte[]
-    blockDecrypt (byte[] in, int inOffset) {
+    @Override
+    public byte[] decrypt(byte[] data) {
+        int inOffset = 0;
         int[] sBox = sessionKey.getsBox();
         int[] sKey = sessionKey.getsKey();
 
-        int x2 = (in[inOffset++] & 0xFF)       |
-                (in[inOffset++] & 0xFF) <<  8 |
-                (in[inOffset++] & 0xFF) << 16 |
-                (in[inOffset++] & 0xFF) << 24;
-        int x3 = (in[inOffset++] & 0xFF)       |
-                (in[inOffset++] & 0xFF) <<  8 |
-                (in[inOffset++] & 0xFF) << 16 |
-                (in[inOffset++] & 0xFF) << 24;
-        int x0 = (in[inOffset++] & 0xFF)       |
-                (in[inOffset++] & 0xFF) <<  8 |
-                (in[inOffset++] & 0xFF) << 16 |
-                (in[inOffset++] & 0xFF) << 24;
-        int x1 = (in[inOffset++] & 0xFF)       |
-                (in[inOffset++] & 0xFF) <<  8 |
-                (in[inOffset++] & 0xFF) << 16 |
-                (in[inOffset++] & 0xFF) << 24;
+        int x2 = (data[inOffset++] & 0xFF)       |
+                (data[inOffset++] & 0xFF) <<  8 |
+                (data[inOffset++] & 0xFF) << 16 |
+                (data[inOffset++] & 0xFF) << 24;
+        int x3 = (data[inOffset++] & 0xFF)       |
+                (data[inOffset++] & 0xFF) <<  8 |
+                (data[inOffset++] & 0xFF) << 16 |
+                (data[inOffset++] & 0xFF) << 24;
+        int x0 = (data[inOffset++] & 0xFF)       |
+                (data[inOffset++] & 0xFF) <<  8 |
+                (data[inOffset++] & 0xFF) << 16 |
+                (data[inOffset++] & 0xFF) << 24;
+        int x1 = (data[inOffset++] & 0xFF)       |
+                (data[inOffset++] & 0xFF) <<  8 |
+                (data[inOffset++] & 0xFF) << 16 |
+                (data[inOffset++] & 0xFF) << 24;
 
         x2 ^= sKey[OUTPUT_WHITEN    ];
         x3 ^= sKey[OUTPUT_WHITEN + 1];
@@ -571,11 +582,5 @@ public final class TwoFish
             case 3: result = b3(x); break;
         }
         return result;
-    }
-
-
-
-    public static void main (String[] args) throws InvalidKeyException {
-
     }
 }

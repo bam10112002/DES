@@ -1,19 +1,17 @@
 package org.example.cryptography.twofish;
 
-public class TwoFishKey {
-    private final int[] sBox;
-    private final int[] sKey;
+import org.example.cryptography.Cryptography;
+import org.example.cryptography.keys.Key;
 
-    public TwoFishKey(int[] sBox, int[] sKey) {
-        this.sBox = sBox;
-        this.sKey = sKey;
+public class TwoFishKey extends Key {
+    byte[] key;
+
+    public TwoFishKey(byte[] key) {
+        super(Cryptography.Algorithm.TWOFISH);
+        this.key = key;
     }
 
-    public int[] getsBox() {
-        return sBox;
-    }
-
-    public int[] getsKey() {
-        return sKey;
+    public byte[] getKey() {
+        return key;
     }
 }
