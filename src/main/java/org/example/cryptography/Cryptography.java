@@ -18,7 +18,7 @@ public class Cryptography {
     /**
      * DES (Data Encryption Standard) - блочный симметричный алгоритм шифрования
      */
-    public enum Algorithm { DES, RSA}
+    public enum Algorithm { DES, RSA, TWOFISH}
 
     /**
      * ECB (Electronic Codebook) - каждый блок шифруется отдельно, не взаимодействуя с другими блоками
@@ -42,6 +42,9 @@ public class Cryptography {
 
         switch (algorithm) {
             case DES -> this.algorithm = new DES(((DESKey)key).getValue());
+            case TWOFISH -> {
+
+            }
             case RSA -> {
                 this.algorithm = new RSA((KeyPair)key);
                 BLOCKSIZE = ((KeyPair)key).getN().length-1;

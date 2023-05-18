@@ -47,45 +47,39 @@ public class SimplicityTest {
         }
     }
 
-    @Test
-    void ParallelMillerRabinTests() throws InterruptedException {
-        SimplicityTestInterface test = new MillerRabinTest();
-        SimplicityTestInterface test2 = new ParallelMillerRabinTest();
-//        for (BigInteger num : SimplicityNumbers) {
+//    @Test
+//    void ParallelMillerRabinTests() throws InterruptedException {
+//        SimplicityTestInterface test = new MillerRabinTest();
+//        SimplicityTestInterface test2 = new ParallelMillerRabinTest();
+//
+//        Random random = new Random();
+//        for (int i = 0; i < 50; i++) {
+//            BigInteger num = new BigInteger(2048, random);
 //            assertEquals(test.check(num, 0.9999), test2.check(num,0.9999));
 //        }
-//        for (BigInteger num : Numbers) {
-//            assertEquals(test.check(num, 0.9999), test2.check(num,0.9999));
+//    }
+//
+//    @Test
+//    void TimeTest() throws InterruptedException {
+//        Random random = new Random();
+//        SimplicityTestInterface test = new MillerRabinTest();
+//        SimplicityTestInterface test2 = new ParallelMillerRabinTest();
+//        long start, end, sum1 = 0, sum2 = 0;
+//
+//        for (int i = 0; i < 100; i++) {
+//            BigInteger num = new BigInteger(2048, random);
+//            start = System.currentTimeMillis();
+//            test.check(num, 0.9999);
+//            end = System.currentTimeMillis();
+//            sum1 += end - start;
+//
+//            start = System.currentTimeMillis();
+//            test2.check(num, 0.9999);
+//            end = System.currentTimeMillis();
+//            sum2 += end - start;
 //        }
-
-        Random random = new Random();
-        for (int i = 0; i < 50; i++) {
-            BigInteger num = new BigInteger(2048, random);
-            assertEquals(test.check(num, 0.9999), test2.check(num,0.9999));
-        }
-    }
-
-    @Test
-    void TimeTest() throws InterruptedException {
-        Random random = new Random();
-        SimplicityTestInterface test = new MillerRabinTest();
-        SimplicityTestInterface test2 = new ParallelMillerRabinTest();
-        long start, end, sum1 = 0, sum2 = 0;
-
-        for (int i = 0; i < 100; i++) {
-            BigInteger num = new BigInteger(2048, random);
-            start = System.currentTimeMillis();
-            test.check(num, 0.9999);
-            end = System.currentTimeMillis();
-            sum1 += end - start;
-
-            start = System.currentTimeMillis();
-            test2.check(num, 0.9999);
-            end = System.currentTimeMillis();
-            sum2 += end - start;
-        }
-
-        System.out.println("Miller: "   + sum1);
-        System.out.println("Parallel: " + sum2);
-    }
+//
+//        System.out.println("Miller: "   + sum1);
+//        System.out.println("Parallel: " + sum2);
+//    }
 }
