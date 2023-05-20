@@ -1,8 +1,9 @@
 package org.example.cryptography.benaloh;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
-public class BenalohPublicKey {
+public class BenalohPublicKey implements Serializable {
     private final BigInteger n;
     private final BigInteger y;
 

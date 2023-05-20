@@ -10,4 +10,5 @@ public interface AlgorithmInterface {
     byte[] encrypt(byte[] data) throws XORException;
     byte[] encrypt(@NonNull ByteBuffer data) throws XORException;
     byte[] decrypt(@NonNull ByteBuffer data) throws XORException;
+    int getBufferSize();
 }

@@ -28,8 +28,7 @@ public class Cryptography {
      * CFB
      * OFB
      * CTR
-     * RD
-     *              важно, что initVector длинной 16 байт.
+     * RD важно, что initVector длинной 2x BLOCKSIZE байт.
      */
     public enum Mode { ECB, CBC, CFB, OFB, CTR, RD }
 
@@ -42,14 +41,15 @@ public class Cryptography {
                         @NonNull Key key) throws KeyLenException, InvalidKeyException {
 
         switch (algorithm) {
-            case DES -> this.algorithm = new DES(((DESKey)key).getValue());
-            case TWOFISH -> {
-                this.algorithm = new TwoFish(key);
-                BLOCKSIZE = 16;
+            case DES -> {
+                DES des = new DES(((DESKey)key).getValue());
+                this.algorithm = des;
+                BLOCKSIZE = des.getBufferSize();
             }
-            case RSA -> {
-                this.algorithm = new RSA((KeyPair)key);
-                BLOCKSIZE = ((KeyPair)key).getN().length-1;
+            case TWOFISH -> {
+                TwoFish twoFish = new TwoFish(key);
+                this.algorithm = twoFish;
+                BLOCKSIZE = twoFish.getBufferSize();
             }
         }
         this.mode = mode;
@@ -69,10 +69,6 @@ public class Cryptography {
         return new byte[0];
     }
     public byte @NonNull[] decrypt(byte @NonNull[] data) {
-        if (alg == Algorithm.DES) {
-
-        }
-
         if (Objects.requireNonNull(mode) == Mode.ECB) {
             return denormalizeData(ecbDecrypt(ByteBuffer.wrap(data)));
         }

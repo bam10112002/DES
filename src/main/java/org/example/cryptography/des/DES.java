@@ -1,5 +1,6 @@
 package org.example.cryptography.des;
 
+import com.google.common.primitives.Longs;
 import lombok.NonNull;
 import org.example.cryptography.AlgorithmInterface;
 import org.example.cryptography.exceptions.KeyLenException;
@@ -25,19 +26,25 @@ public class DES implements AlgorithmInterface {
 
     @Override
     public byte[] encrypt(byte[] data) throws XORException {
-        int len = (int)Math.ceil(data.length/8.0) * 8;
+        int len = 8;
+        byte[] data2 = new byte[len];
+        for (int i = 0; i < len; i++)
+            data2[i] = data[i];
+
+//        int len = (int)Math.ceil(data.length/8.0) * 8;
         ByteBuffer bytes = ByteBuffer.allocate(len);
-        bytes.put(data);
-        if (data.length%8 != 0){
-            for (int i = 0; i < 8 - data.length%8; i++) {
-                bytes.put((byte) 0);
-            }
-        }
+        bytes.put(data2);
+//        if (data.length%8 != 0){
+//            for (int i = 0; i < 8 - data.length%8; i++) {
+//                bytes.put((byte) 0);
+//            }
+//        }
         bytes = bytes.position(0);
         ByteBuffer res = ByteBuffer.allocate(len);
-        for (int i = 0; i < len/8; i++) {
-            res.putLong(encrypt(new CustomBitSet(bytes.getLong())).getData());
-        }
+//        for (int i = 0; i < len/8; i++) {
+//            res.putLong(encrypt(new CustomBitSet(bytes.getLong())).getData());
+//        }
+        res.putLong(encrypt(new CustomBitSet(bytes.getLong())).getData());
         return res.array();
     }
     @Override
@@ -45,16 +52,17 @@ public class DES implements AlgorithmInterface {
         int len = (int)Math.ceil(data.length/8.0) * 8;
         ByteBuffer bytes = ByteBuffer.allocate(len);
         bytes.put(data);
-        if (data.length%8 != 0){
-            for (int i = 0; i < 8 - data.length%8; i++) {
-                bytes.put((byte) 0);
-            }
-        }
+//        if (data.length%8 != 0){
+//            for (int i = 0; i < 8 - data.length%8; i++) {
+//                bytes.put((byte) 0);
+//            }
+//        }
         bytes = bytes.position(0);
         ByteBuffer res = ByteBuffer.allocate(len);
-        for (int i = 0; i < len/8; i++) {
-            res.putLong(decrypt(new CustomBitSet(bytes.getLong())).getData());
-        }
+//        for (int i = 0; i < len/8; i++) {
+//            res.putLong(decrypt(new CustomBitSet(bytes.getLong())).getData());
+//        }
+        res.putLong(decrypt(new CustomBitSet(bytes.getLong())).getData());
         return res.array();
     }
     @Override
@@ -152,5 +160,10 @@ public class DES implements AlgorithmInterface {
         for (byte b : str.getBytes())
             value = (value << 8) + (b & 255);
         return value;
+    }
+
+    @Override
+    public int getBufferSize() {
+        return 8;
     }
 }

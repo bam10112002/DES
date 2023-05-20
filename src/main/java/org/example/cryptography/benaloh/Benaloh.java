@@ -1,6 +1,11 @@
 package org.example.cryptography.benaloh;
 
+import lombok.NonNull;
+import org.example.cryptography.AlgorithmInterface;
+import org.example.cryptography.exceptions.XORException;
+
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Random;
 
@@ -39,5 +44,20 @@ public class Benaloh {
                 return i;
         }
         return BigInteger.valueOf(-1);
+    }
+
+    public byte[][] encrypt(byte[] data, BenalohPublicKey publicKey) {
+        byte[][] res = new byte[data.length][];
+        for (int i = 0 ; i < data.length; i++) {
+            res[i] = encrypt(BigInteger.valueOf(data[i] & 0xFF), publicKey).toByteArray();
+        }
+        return res;
+    }
+    public byte[] decrypt(byte[][] data, BenalohPrivateKey privateKey) {
+        byte[] res = new byte[data.length];
+        for (int i = 0 ; i < data.length; i++) {
+            res[i] = (byte)decrypt(new BigInteger(data[i]), privateKey).intValue();
+        }
+        return res;
     }
 }

@@ -1,40 +1,22 @@
 package org.example;
 
+import org.example.web.Client;
+import org.example.web.Server;
 
-import org.example.cryptography.rsa.RSA;
-import org.example.cryptography.rsa.keys.KeyPair;
-import org.example.cryptography.rsa.keys.ParallelRSAKeyGenerator;
-
-import java.math.BigInteger;
+import java.io.*;
+import java.util.Scanner;
 
 
 public class Main {
-    public static void main(String[] args) throws InterruptedException {
-        String data = "Hello my name is Artem";
-        ParallelRSAKeyGenerator gen = new ParallelRSAKeyGenerator();
-        for (int i = 0; i < 20; i++) {
-            KeyPair keys = gen.generateKeyPair(1024 * 2);
+    public static void main(String[] args) throws IOException {
+        System.out.println("Input role");
+        Scanner scanner = new Scanner(System.in);
+        if (scanner.nextLine().equals("Server")) {
+            new Server();
         }
-//        byte[] encripted = RSA.encript(data.getBytes(), keys);
-//        String decripted = new String(RSA.decript(encripted, keys));
-//        System.out.println(decripted);
-    }
-
-    public static BigInteger modPow(BigInteger a, BigInteger b, BigInteger mod){
-        BigInteger res = BigInteger.ONE;
-        BigInteger two = BigInteger.TWO;
-        int len = b.bitLength();
-
-        for (int i = len-1; i > 0; i--) {
-            if (b.testBit(i))
-                res = res.multiply(a);
-
-            res = res.modPow(two, mod);
+        else {
+            new Client();
         }
 
-        if (b.testBit(0))
-            res = res.multiply(a);
-
-        return res;
     }
 }

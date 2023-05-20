@@ -77,4 +77,9 @@ public class RSA implements AlgorithmInterface {
         return new BigInteger(dataArr).modPow(new BigInteger(pair.getPrivateKey()),
                 new BigInteger(pair.getN())).toByteArray();
     }
+
+    @Override
+    public int getBufferSize() {
+        return 0;
+    }
 }
